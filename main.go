@@ -22,20 +22,23 @@ func voteCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 	delMsg := tgbotapi.NewDeleteMessage(msg.Chat.ID, msg.MessageID)
 	bot.DeleteMessage(delMsg)
 
-	//myUserName := msg.From.UserName
-	// if _, ok := votes[myUserName]; ok {
-	// 	reply := fmt.Sprintln("Calm down, @"+myUserName, " you have already voted!")
-	// 	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
-	// 	bot.Send(replyMsg)
-	// 	return
-	// }
+	myUserName := msg.From.UserName
+	username := msg.CommandArguments()
+	key := myUserName + "_" + username[1:]
+
+	if _, ok := votes[key]; ok {
+		reply := fmt.Sprintln("Calm down, @"+myUserName, " you have already voted this!")
+		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+		bot.Send(replyMsg)
+		return
+	}
 
 	//reply := fmt.Sprintln(msg.From.FirstName, msg.From.LastName, "voted for someone!")
 	reply := fmt.Sprintln("@"+msg.From.UserName, "voted for someone!")
 	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 	bot.Send(replyMsg)
-	username := msg.CommandArguments()
-	votes[msg.From.UserName+string(msg.MessageID)] = username[1:]
+
+	votes[key] = username[1:]
 	log.Printf("Votes : %s", votes)
 }
 
