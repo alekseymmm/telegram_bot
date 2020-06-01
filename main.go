@@ -64,6 +64,11 @@ func main() {
 			delete(votes, pick)
 			log.Printf("myUserName=%s, votedUserName=%s", myUserName, votedUserName)
 			log.Printf("Votes : %s", votes)
+			if myUserName == votedUserName {
+				reply := fmt.Sprintln("Sorry, @"+myUserName, "but you are fired! Does someone else feel lucky?")
+				replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+				bot.Send(replyMsg)
+			}
 		}
 
 		// // Пользователь, который написал боту
