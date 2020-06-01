@@ -111,6 +111,19 @@ func countCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]stri
 	bot.Send(replyMsg)
 }
 
+func helpCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+	reply := `This is hr_santa bot. You can propose the name to fire someone.
+
+			 Run /vote @username . You can vote multiple times, but for differnet persons.
+
+			 If you feel lucky try and pull some names. If you get your own name then you are fired.
+			 Run /pull or /pull <number> to try <number> times or /pull all   if you are crazy.
+			 
+			 Run /count to see the total number of available votes.`
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+	bot.Send(replyMsg)
+}
+
 func main() {
 	// подключаемся к боту с помощью токена
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
@@ -122,7 +135,7 @@ func main() {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	votes := make(map[string]string)
-
+	chatVotesMap := make(map[int64]map[string]string)
 	// инициализируем канал, куда будут прилетать обновления от API
 	var ucfg tgbotapi.UpdateConfig = tgbotapi.NewUpdate(0)
 	ucfg.Timeout = 60
@@ -137,6 +150,15 @@ func main() {
 		if !msg.IsCommand() { // ignore any non-command Messages
 			continue
 		}
+		chatID := msg.Chat.ID
+		if val, ok := chatVotesMap[chatID]; ok {
+			votes = val
+			log.Printf("Found votes map for chatID=%d\n", chatID)
+		} else {
+			votes = make(map[string]string)
+			chatVotesMap[chatID] = votes
+			log.Printf("Create votes map for chatID=%d\n", chatID)
+		}
 
 		cmd := msg.Command()
 		log.Printf("Get command: %s", cmd)
@@ -147,6 +169,8 @@ func main() {
 			pullCmd(bot, msg, votes)
 		case "count":
 			countCmd(bot, msg, votes)
+		case "help":
+			helpCmd(bot, msg)
 		}
 
 	}
