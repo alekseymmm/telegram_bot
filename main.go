@@ -10,6 +10,21 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+func getName(u *tgbotapi.User) string {
+	res := ""
+	if u == nil {
+		return res
+	}
+	if u.FirstName != "" {
+		res += u.FirstName + " "
+	}
+	if u.LastName != "" {
+		res += u.LastName + " "
+	}
+	res += "(@" + u.UserName + ")"
+	return res
+}
+
 func deleteFiredUser(votes map[string]string, username string) {
 	for k := range votes {
 		if votes[k] == username {
@@ -26,15 +41,16 @@ func voteCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 	username := msg.CommandArguments()
 	key := myUserName + "_" + username[1:]
 
+	printedName := getName(msg.From)
 	if _, ok := votes[key]; ok {
-		reply := fmt.Sprintln("Calm down, @"+myUserName, " you have already voted this!")
+		reply := fmt.Sprintln("Calm down,", printedName, " you have already voted this!")
 		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 		bot.Send(replyMsg)
 		return
 	}
 
 	//reply := fmt.Sprintln(msg.From.FirstName, msg.From.LastName, "voted for someone!")
-	reply := fmt.Sprintln("@"+msg.From.UserName, "voted for someone!")
+	reply := fmt.Sprintln(printedName, "voted for someone!")
 	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 	bot.Send(replyMsg)
 
@@ -82,12 +98,13 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 		}
 	}
 
+	printedName := getName(msg.From)
 	for i := 0; i < cnt; i++ {
 		votedUserName := pickVotedName(votes)
 		log.Printf("i=%d myUserName=%s, votedUserName=%s", i, myUserName, votedUserName)
 		log.Printf("Votes : %s", votes)
 		if myUserName == votedUserName {
-			reply := fmt.Sprintln("Sorry, @"+myUserName, "but you are fired!")
+			reply := fmt.Sprintln("Sorry,", printedName, "but you are fired!")
 			if len(votes) > 0 {
 				reply += "Does someone else feel lucky?\n"
 			} else {
@@ -99,7 +116,7 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 			return
 		}
 	}
-	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you @"+myUserName+" You may stay.")
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you "+printedName+". You may stay.")
 	bot.Send(replyMsg)
 }
 
