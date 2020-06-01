@@ -146,27 +146,5 @@ func main() {
 			countCmd(bot, msg, votes)
 		}
 
-		// // Пользователь, который написал боту
-		// UserName := update.Message.From.UserName
-
-		// // ID чата/диалога.
-		// // Может быть идентификатором как чата с пользователем
-		// // (тогда он равен UserID) так и публичного чата/канала
-		// ChatID := update.Message.Chat.ID
-
-		// // Текст сообщения
-		// Text := update.Message.Text
-
-		// log.Printf("[%s] %d %s", UserName, ChatID, Text)
-
-		// // Ответим пользователю его же сообщением
-		// //reply := Text
-		// // Созадаем сообщение
-		// delMsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
-		// bot.DeleteMessage(delMsg)
-		//msg := tgbotapi.NewMessage(ChatID, reply)
-		// и отправляем его
-		//bot.Send(msg)
-
 	}
 }
