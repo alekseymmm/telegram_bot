@@ -4,13 +4,72 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+func deleteFiredUser(votes map[string]string, username string) {
+	for k := range votes {
+		if votes[k] == username {
+			delete(votes, k)
+		}
+	}
+}
+
+func voteCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
+	delMsg := tgbotapi.NewDeleteMessage(msg.Chat.ID, msg.MessageID)
+	bot.DeleteMessage(delMsg)
+
+	myUserName := msg.From.UserName
+	if _, ok := votes[myUserName]; ok {
+		reply := fmt.Sprintln("Calm down, @"+myUserName, " you have already voted!")
+		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+		bot.Send(replyMsg)
+		return
+	}
+	//reply := fmt.Sprintln(msg.From.FirstName, msg.From.LastName, "voted for someone!")
+	reply := fmt.Sprintln("@"+msg.From.UserName, "voted for someone!")
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+	bot.Send(replyMsg)
+	username := msg.CommandArguments()
+	votes[msg.From.UserName] = username[1:]
+	log.Printf("Votes : %s", votes)
+}
+
+func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
+	myUserName := msg.From.UserName
+
+	keys := make([]string, len(votes))
+	i := 0
+	for k := range votes {
+		keys[i] = k
+		i++
+	}
+	ind := rand.Intn(len(keys))
+	pick := keys[ind]
+
+	votedUserName := votes[pick]
+	delete(votes, pick)
+	log.Printf("myUserName=%s, votedUserName=%s", myUserName, votedUserName)
+	log.Printf("Votes : %s", votes)
+	if myUserName == votedUserName {
+		reply := fmt.Sprintln("Sorry, @"+myUserName, "but you are fired!")
+		if len(votes) > 0 {
+			reply += "Does someone else feel lucky?\n"
+		} else {
+			reply += "No one left...\n"
+		}
+		deleteFiredUser(votes, myUserName)
+		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+		bot.Send(replyMsg)
+	}
+
+}
+
 func main() {
 	// подключаемся к боту с помощью токена
-	bot, err := tgbotapi.NewBotAPI("1174621006:AAF04nE-Cku5AhRIxPZeLUkEpGedVfwjYD4")
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -39,36 +98,10 @@ func main() {
 		log.Printf("Get command: %s", cmd)
 		switch msg.Command() {
 		case "vote":
-			delMsg := tgbotapi.NewDeleteMessage(msg.Chat.ID, msg.MessageID)
-			bot.DeleteMessage(delMsg)
-			//reply := fmt.Sprintln(msg.From.FirstName, msg.From.LastName, "voted for someone!")
-			reply := fmt.Sprintln("@"+msg.From.UserName, "voted for someone!")
-			replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
-			bot.Send(replyMsg)
-			username := msg.CommandArguments()
-			votes[msg.From.UserName] = username[1:]
-			log.Printf("Votes : %s", votes)
+			voteCmd(bot, msg, votes)
 
 		case "pull":
-			myUserName := msg.From.UserName
-			keys := make([]string, len(votes))
-			i := 0
-			for k := range votes {
-				keys[i] = k
-				i++
-			}
-			ind := rand.Intn(len(keys))
-			pick := keys[ind]
-
-			votedUserName := votes[pick]
-			delete(votes, pick)
-			log.Printf("myUserName=%s, votedUserName=%s", myUserName, votedUserName)
-			log.Printf("Votes : %s", votes)
-			if myUserName == votedUserName {
-				reply := fmt.Sprintln("Sorry, @"+myUserName, "but you are fired! Does someone else feel lucky?")
-				replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
-				bot.Send(replyMsg)
-			}
+			pullCmd(bot, msg, votes)
 		}
 
 		// // Пользователь, который написал боту
