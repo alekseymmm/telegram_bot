@@ -96,7 +96,7 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 			return
 		}
 	}
-	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you. You may stay.")
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you @"+myUserName+" You may stay.")
 	bot.Send(replyMsg)
 }
 
