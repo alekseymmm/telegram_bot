@@ -91,7 +91,7 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 			bot.Send(replyMsg)
 			return
 		}
-		if cnt > len(votes) {
+		if val > len(votes) {
 			cnt = len(votes)
 		} else {
 			cnt = val
@@ -148,7 +148,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	bot.Debug = true
+	bot.Debug = false
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	votes := make(map[string]string)
