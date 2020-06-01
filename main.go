@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -21,25 +22,24 @@ func voteCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 	delMsg := tgbotapi.NewDeleteMessage(msg.Chat.ID, msg.MessageID)
 	bot.DeleteMessage(delMsg)
 
-	myUserName := msg.From.UserName
-	if _, ok := votes[myUserName]; ok {
-		reply := fmt.Sprintln("Calm down, @"+myUserName, " you have already voted!")
-		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
-		bot.Send(replyMsg)
-		return
-	}
+	//myUserName := msg.From.UserName
+	// if _, ok := votes[myUserName]; ok {
+	// 	reply := fmt.Sprintln("Calm down, @"+myUserName, " you have already voted!")
+	// 	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+	// 	bot.Send(replyMsg)
+	// 	return
+	// }
+
 	//reply := fmt.Sprintln(msg.From.FirstName, msg.From.LastName, "voted for someone!")
 	reply := fmt.Sprintln("@"+msg.From.UserName, "voted for someone!")
 	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 	bot.Send(replyMsg)
 	username := msg.CommandArguments()
-	votes[msg.From.UserName] = username[1:]
+	votes[msg.From.UserName+string(msg.MessageID)] = username[1:]
 	log.Printf("Votes : %s", votes)
 }
 
-func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
-	myUserName := msg.From.UserName
-
+func pickVotedName(votes map[string]string) string {
 	keys := make([]string, len(votes))
 	i := 0
 	for k := range votes {
@@ -51,19 +51,53 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 
 	votedUserName := votes[pick]
 	delete(votes, pick)
-	log.Printf("myUserName=%s, votedUserName=%s", myUserName, votedUserName)
-	log.Printf("Votes : %s", votes)
-	if myUserName == votedUserName {
-		reply := fmt.Sprintln("Sorry, @"+myUserName, "but you are fired!")
-		if len(votes) > 0 {
-			reply += "Does someone else feel lucky?\n"
-		} else {
-			reply += "No names left...\n"
+
+	return votedUserName
+}
+
+func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
+	myUserName := msg.From.UserName
+
+	arg := msg.CommandArguments()
+	cnt := 0
+	switch arg {
+	case "all":
+		cnt = len(votes)
+	case "":
+		cnt = 1
+	default:
+		val, err := strconv.Atoi(arg)
+		if err != nil {
+			replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Wrong  /pull comand format")
+			bot.Send(replyMsg)
+			return
 		}
-		deleteFiredUser(votes, myUserName)
-		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
-		bot.Send(replyMsg)
+		if cnt > len(votes) {
+			cnt = len(votes)
+		} else {
+			cnt = val
+		}
 	}
+
+	for i := 0; i < cnt; i++ {
+		votedUserName := pickVotedName(votes)
+		log.Printf("i=%d myUserName=%s, votedUserName=%s", i, myUserName, votedUserName)
+		log.Printf("Votes : %s", votes)
+		if myUserName == votedUserName {
+			reply := fmt.Sprintln("Sorry, @"+myUserName, "but you are fired!")
+			if len(votes) > 0 {
+				reply += "Does someone else feel lucky?\n"
+			} else {
+				reply += "No names left...\n"
+			}
+			deleteFiredUser(votes, myUserName)
+			replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+			bot.Send(replyMsg)
+			return
+		}
+	}
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you. You may stay.")
+	bot.Send(replyMsg)
 }
 
 func countCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
