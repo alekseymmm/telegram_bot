@@ -58,13 +58,20 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 		if len(votes) > 0 {
 			reply += "Does someone else feel lucky?\n"
 		} else {
-			reply += "No one left...\n"
+			reply += "No names left...\n"
 		}
 		deleteFiredUser(votes, myUserName)
 		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 		bot.Send(replyMsg)
 	}
+}
 
+func countCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
+	log.Printf("Votes : %s", votes)
+
+	reply := fmt.Sprintln("Names left: ", len(votes))
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+	bot.Send(replyMsg)
 }
 
 func main() {
@@ -99,9 +106,10 @@ func main() {
 		switch msg.Command() {
 		case "vote":
 			voteCmd(bot, msg, votes)
-
 		case "pull":
 			pullCmd(bot, msg, votes)
+		case "count":
+			countCmd(bot, msg, votes)
 		}
 
 		// // Пользователь, который написал боту
