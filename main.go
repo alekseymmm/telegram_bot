@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -16,6 +17,8 @@ func main() {
 
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
+
+	votes := make(map[string]string)
 
 	// инициализируем канал, куда будут прилетать обновления от API
 	var ucfg tgbotapi.UpdateConfig = tgbotapi.NewUpdate(0)
@@ -43,7 +46,24 @@ func main() {
 			replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 			bot.Send(replyMsg)
 			username := msg.CommandArguments()
-			log.Printf("Add person: %s", username)
+			votes[msg.From.UserName] = username[1:]
+			log.Printf("Votes : %s", votes)
+
+		case "pull":
+			myUserName := msg.From.UserName
+			keys := make([]string, len(votes))
+			i := 0
+			for k := range votes {
+				keys[i] = k
+				i++
+			}
+			ind := rand.Intn(len(keys))
+			pick := keys[ind]
+
+			votedUserName := votes[pick]
+			delete(votes, pick)
+			log.Printf("myUserName=%s, votedUserName=%s", myUserName, votedUserName)
+			log.Printf("Votes : %s", votes)
 		}
 
 		// // Пользователь, который написал боту
