@@ -116,7 +116,7 @@ func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]strin
 			return
 		}
 	}
-	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you "+printedName+". You may stay.")
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, "Lucky you "+printedName+". You are not fired.")
 	bot.Send(replyMsg)
 }
 
@@ -136,7 +136,7 @@ func helpCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 			 If you feel lucky try and pull some names. If you get your own name then you are fired.
 			 Run /pull or /pull <number> to try <number> times or /pull all   if you are crazy.
 			 
-			 Run /count to see the total number of available votes.`
+			 Run /count to see how many names are available to /pull.`
 	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
 	bot.Send(replyMsg)
 }
