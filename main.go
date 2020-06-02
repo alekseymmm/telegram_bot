@@ -34,14 +34,21 @@ func deleteFiredUser(votes map[string]string, username string) {
 }
 
 func voteCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
+
 	delMsg := tgbotapi.NewDeleteMessage(msg.Chat.ID, msg.MessageID)
 	bot.DeleteMessage(delMsg)
 
 	myUserName := msg.From.UserName
 	username := msg.CommandArguments()
+	printedName := getName(msg.From)
+	if username == "" {
+		reply := printedName + ", no @username in your vote. Add someone.\n"
+		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+		bot.Send(replyMsg)
+		return
+	}
 	key := myUserName + "_" + username[1:]
 
-	printedName := getName(msg.From)
 	if _, ok := votes[key]; ok {
 		reply := fmt.Sprintln("Calm down,", printedName, " you have already voted this!")
 		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
@@ -76,6 +83,13 @@ func pickVotedName(votes map[string]string) string {
 
 func pullCmd(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, votes map[string]string) {
 	myUserName := msg.From.UserName
+
+	if len(votes) == 0 {
+		reply := "No votes yet, you may suggest someone to fire.\n"
+		replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+		bot.Send(replyMsg)
+		return
+	}
 
 	arg := msg.CommandArguments()
 	cnt := 0
